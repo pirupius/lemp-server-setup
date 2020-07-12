@@ -20,12 +20,12 @@ ansi -n --bold --green "Domain list: ${domains}"
 ansi -n --bold --green "Item name：${project}"
 ansi -n --bold --green "Project directory：${project_dir}"
 
-read -r -p "是否确认？ [y/N] " response
+read -r -p "Are u sure？ [y/N] " response
 case "$response" in
     [yY][eE][sS]|[yY])
         ;;
     *)
-        ansi -n --bold --bg-red "用户取消"
+        ansi -n --bold --bg-red "User cancelled"
         exit 1
         ;;
 esac
@@ -37,10 +37,10 @@ cat ${CURRENT_DIR}/nginx_site_conf.tpl |
 
 ln -sf /etc/nginx/sites-available/${project}.conf /etc/nginx/sites-enabled/${project}.conf
 
-ansi -n --bold --green "配置文件创建成功";
+ansi -n --bold --green "Configuration file created successfully";
 
 mkdir -p ${project_dir} && chown -R ${WWW_USER}.${WWW_USER_GROUP} ${project_dir}
 
 systemctl restart nginx.service
 
-ansi -n --bold --green "Nginx 重启成功";
+ansi -n --bold --green "Nginx Successful restart";
