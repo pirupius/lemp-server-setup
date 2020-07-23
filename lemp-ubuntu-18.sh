@@ -1,0 +1,193 @@
+#!/usr/bin/env bash
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Check if user is root
+[ $(id -u) != "0" ] && { echo "${CFAILURE}Error: You must be root to run this script${CEND}"; exit 1; }
+
+# Configure
+MYSQL_ROOT_PASSWORD="deploi"
+MYSQL_NORMAL_USER="deploi"
+MYSQL_NORMAL_USER_PASSWORD="deploi"
+
+# Check if password is defined
+if [[ "$MYSQL_ROOT_PASSWORD" == "" ]]; then
+    echo "${CFAILURE}Error: MYSQL_ROOT_PASSWORD not define!!${CEND}";
+    exit 1;
+fi
+if [[ "$MYSQL_NORMAL_USER_PASSWORD" == "" ]]; then
+    echo "${CFAILURE}Error: MYSQL_NORMAL_USER_PASSWORD not define!!${CEND}";
+    exit 1;
+fi
+
+# Force Locale
+
+export LC_ALL="en_US.UTF-8"
+echo "LC_ALL=en_US.UTF-8" >> /etc/default/locale
+locale-gen en_US.UTF-8
+
+# Update Package List
+
+apt-get update
+
+# Update System Packages
+
+apt-get -y upgrade
+
+# remove apache2
+apt purge apache2 -y
+
+# Install Some PPAs
+
+apt-get install -y software-properties-common curl
+
+apt-add-repository ppa:nginx/development -y
+apt-add-repository ppa:chris-lea/redis-server -y
+apt-add-repository ppa:ondrej/php -y
+
+# Install node
+curl --silent --location https://deb.nodesource.com/setup_12.x | bash -
+
+# Update Package Lists
+
+apt-get update
+
+# Install Some Basic Packages
+
+apt-get install -y build-essential dos2unix gcc git libmcrypt4 libpcre3-dev \
+make python2.7-dev python-pip re2c supervisor unattended-upgrades whois vim libnotify-bin
+
+# Set Kampala Timezone
+
+ln -sf /usr/share/zoneinfo/Africa/Kampala /etc/localtime
+
+# Install PHP
+
+apt-get install -y php7.3-cli php7.3-bcmath  php7.3-curl php7.3-fpm php7.3-gd \
+    php7.3-mbstring php7.3-mysql php7.3-opcache php7.3-pgsql php7.3-readline \
+    php7.3-xml php7.3-zip php7.3-sqlite3 php7.3-redis
+
+
+# Install Composer
+
+curl -sS https://getcomposer.org/installer | php
+mv composer.phar /usr/local/bin/composer
+
+# Add Composer Global Bin To Path
+printf "\nPATH=\"$(composer config -g home 2>/dev/null)/vendor/bin:\$PATH\"\n" | tee -a ~/.profile
+
+# Set Some PHP CLI Settings
+
+sudo sed -i "s/error_reporting = .*/error_reporting = E_ALL/" /etc/php/7.3/cli/php.ini
+sudo sed -i "s/display_errors = .*/display_errors = On/" /etc/php/7.3/cli/php.ini
+sudo sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/7.3/cli/php.ini
+sudo sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/7.3/cli/php.ini
+
+# Install Nginx & PHP-FPM
+
+apt-get install -y --force-yes nginx php7.3-fpm
+
+# Setup Some PHP-FPM Options
+
+sed -i "s/error_reporting = .*/error_reporting = E_ALL \& ~E_NOTICE \& ~E_STRICT \& ~E_DEPRECATED/" /etc/php/7.3/fpm/php.ini
+sed -i "s/display_errors = .*/display_errors = Off/" /etc/php/7.3/fpm/php.ini
+sed -i "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/" /etc/php/7.3/fpm/php.ini
+sed -i "s/memory_limit = .*/memory_limit = 512M/" /etc/php/7.3/fpm/php.ini
+sed -i "s/upload_max_filesize = .*/upload_max_filesize = 50M/" /etc/php/7.3/fpm/php.ini
+sed -i "s/post_max_size = .*/post_max_size = 50M/" /etc/php/7.3/fpm/php.ini
+sed -i "s/;date.timezone.*/date.timezone = UTC/" /etc/php/7.3/fpm/php.ini
+sed -i "s/listen =.*/listen = 127.0.0.1:9000/" /etc/php/7.3/fpm/pool.d/www.conf
+
+# Setup Some fastcgi_params Options
+
+cat > /etc/nginx/fastcgi_params << EOF
+fastcgi_param	QUERY_STRING		\$query_string;
+fastcgi_param	REQUEST_METHOD		\$request_method;
+fastcgi_param	CONTENT_TYPE		\$content_type;
+fastcgi_param	CONTENT_LENGTH		\$content_length;
+fastcgi_param	SCRIPT_FILENAME		\$request_filename;
+fastcgi_param	SCRIPT_NAME		\$fastcgi_script_name;
+fastcgi_param	REQUEST_URI		\$request_uri;
+fastcgi_param	DOCUMENT_URI		\$document_uri;
+fastcgi_param	DOCUMENT_ROOT		\$document_root;
+fastcgi_param	SERVER_PROTOCOL		\$server_protocol;
+fastcgi_param	GATEWAY_INTERFACE	CGI/1.1;
+fastcgi_param	SERVER_SOFTWARE		nginx/\$nginx_version;
+fastcgi_param	REMOTE_ADDR		\$remote_addr;
+fastcgi_param	REMOTE_PORT		\$remote_port;
+fastcgi_param	SERVER_ADDR		\$server_addr;
+fastcgi_param	SERVER_PORT		\$server_port;
+fastcgi_param	SERVER_NAME		\$server_name;
+fastcgi_param	HTTPS			\$https if_not_empty;
+fastcgi_param	REDIRECT_STATUS		200;
+EOF
+
+# Set The Nginx & PHP-FPM User
+
+sed -i "s/user www-data;/user deploi;/" /etc/nginx/nginx.conf
+sed -i "s/# server_names_hash_bucket_size.*/server_names_hash_bucket_size 64;/" /etc/nginx/nginx.conf
+
+sed -i "s/user = www-data/user = deploi/" /etc/php/7.3/fpm/pool.d/www.conf
+sed -i "s/group = www-data/group = deploi/" /etc/php/7.3/fpm/pool.d/www.conf
+
+sed -i "s/listen\.owner.*/listen.owner = deploi/" /etc/php/7.3/fpm/pool.d/www.conf
+sed -i "s/listen\.group.*/listen.group = deploi/" /etc/php/7.3/fpm/pool.d/www.conf
+sed -i "s/;listen\.mode.*/listen.mode = 0666/" /etc/php/7.3/fpm/pool.d/www.conf
+
+service nginx restart
+service php7.3-fpm restart
+
+# Install Node
+
+apt-get install -y nodejs npm
+
+/usr/bin/npm install -g gulp
+
+# Install SQLite
+
+apt-get install -y sqlite3 libsqlite3-dev
+
+# Install MySQL
+
+debconf-set-selections <<< "mysql-community-server mysql-community-server/root-pass password ${MYSQL_ROOT_PASSWORD}"
+debconf-set-selections <<< "mysql-community-server mysql-community-server/re-root-pass password ${MYSQL_ROOT_PASSWORD}"
+apt-get install -y mysql-server
+
+# Configure MySQL Password Lifetime
+
+echo "default_password_lifetime = 0" >> /etc/mysql/mysql.conf.d/mysqld.cnf
+
+mysql --user="root" --password="${MYSQL_ROOT_PASSWORD}" -e "CREATE USER '${MYSQL_NORMAL_USER}'@'0.0.0.0' IDENTIFIED BY '${MYSQL_NORMAL_USER_PASSWORD}';"
+mysql --user="root" --password="${MYSQL_ROOT_PASSWORD}" -e "GRANT ALL ON *.* TO '${MYSQL_NORMAL_USER}'@'127.0.0.1' IDENTIFIED BY '${MYSQL_NORMAL_USER_PASSWORD}' WITH GRANT OPTION;"
+mysql --user="root" --password="${MYSQL_ROOT_PASSWORD}" -e "GRANT ALL ON *.* TO '${MYSQL_NORMAL_USER}'@'localhost' IDENTIFIED BY '${MYSQL_NORMAL_USER_PASSWORD}' WITH GRANT OPTION;"
+mysql --user="root" --password="${MYSQL_ROOT_PASSWORD}" -e "FLUSH PRIVILEGES;"
+service mysql restart
+
+# Add Timezone Support To MySQL
+
+mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql --user=root --password=${MYSQL_ROOT_PASSWORD} mysql
+
+# Install Cache Libraries
+
+apt-get install -y redis-server memcached
+
+# Configure Supervisor
+
+systemctl enable supervisor.service
+service supervisor start
+
+# Enable Swap Memory
+
+/bin/dd if=/dev/zero of=/var/swap.1 bs=1M count=1024
+/sbin/mkswap /var/swap.1
+/sbin/swapon /var/swap.1
+
+clear
+echo "--"
+echo "--"
+echo "🎉 Done."
+echo "MySQL Root Password: ${MYSQL_ROOT_PASSWORD}"
+echo "MySQL Normal User: ${MYSQL_NORMAL_USER}"
+echo "MySQL Normal User Password: ${MYSQL_NORMAL_USER_PASSWORD}"
+echo "--"
+echo "--"

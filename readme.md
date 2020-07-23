@@ -1,12 +1,6 @@
-## Intro
+## Included Software
 
-This is a shell script for setting up Laravel Production environment on Ubuntu 14.04 system （ [Spinoff from](https://github.com/summerblue/laravel-ubuntu-init) ).
-
-> [Link](https://phphub.org/topics/2814)
-
-## Software list
-
-* [Ubuntu Server 16]
+* Ubuntu Server 18
 * Git
 * PHP 7.1
 * Nginx
@@ -141,5 +135,60 @@ Restart Nginx when you done:
 ```
 service nginx restart
 ```
+
+
+
+
+
+======================================
+
+
+
+LNMP installation script for Ubuntu 16.04, and set up domestic mirror acceleration.
+
+Make sure that all commands are executed as root, if not root login account, you need to do sudo -H -sto root account and then download and install.
+
+Software list
+Git
+PHP 7.3
+Nginx
+MySQL
+Sqlite3
+Composer
+Chapter 8
+Yarn
+Redis
+Complaint
+Memcached
+Optional software list
+The following software needs to manually execute the installation script:
+
+Elasticsearch:, the ./16.04/install_elasticsearch.shdefault is 6.x, if you want to install 7.x then execute./16.04/install_elasticsearch.sh 7
+installation steps
+wget -qO- https://raw.githubusercontent.com/summerblue/laravel-ubuntu-init/master/download.sh - | bash
+This script will install the script downloaded to the user's Home directory of the current laravel-ubuntu-initdirectory and automatically execute the installation script will output Mysql root account password on the screen after the installation is complete, properly preserved.
+
+If it is not the root account, it will not be installed automatically. You need to switch to the root account and execute it ./16.04/install.sh.
+
+Daily use
+1. New Nginx site
+./16.04/nginx_add_site.sh
+You will be prompted to enter the site name (only English, numbers, -and _), domain name (multiple domain names are separated by spaces), after confirmation is correct, it will create the corresponding Nginx configuration and restart Nginx.
+
+2. Add Mysql user and database
+./16.04/mysql_add_user.sh
+You will be prompted to enter the root password. If you make a mistake, you cannot continue. Enter the Mysql user name to be created and confirm whether you need to create a database corresponding to the user name.
+
+After the creation is completed, the password of the new user will be output to the screen, please save it properly.
+
+3. Execute the command as www-data
+This provides a program sudowwwof alias, when it is necessary to www-datathe execution command user identity (e.g. git clone 项目, php artisan config:cacheetc.), can be added directly in front of the command sudowww, at both ends of the original command with an apostrophe, such as:
+
+sudowww 'php artisan config:cache'
+
+
+
+
+
 
 

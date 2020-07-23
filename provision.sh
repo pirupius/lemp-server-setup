@@ -9,7 +9,7 @@ export LC_ALL="en_US.UTF-8"
 echo "LC_ALL=en_US.UTF-8" >> /etc/default/locale
 locale-gen en_US.UTF-8
 
-# Add deploi user and group, commented out 
+# Add deploi user and group, commented out
 # becuase this user is already created in my case
 
 # addgroup deploi
