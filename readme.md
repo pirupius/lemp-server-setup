@@ -26,7 +26,7 @@ chmod +x deploy.sh
 Ubuntu 18
 
 ```
-wget https://raw.githubusercontent.com/pirupius/lemp-server-setup/master/lemp-ubuntu-14.sh -O deploy.sh
+wget https://raw.githubusercontent.com/pirupius/lemp-server-setup/master/lemp-ubuntu-18.sh -O deploy.sh
 chmod +x deploy.sh
 ```
 
