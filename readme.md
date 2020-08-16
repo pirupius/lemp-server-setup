@@ -1,8 +1,8 @@
 ## Included Software
 
-* Ubuntu Server 18
+* Ubuntu Server
 * Git
-* PHP 7.1
+* PHP
 * Nginx
 * MySQL
 * Sqlite3
@@ -14,28 +14,19 @@
 
 ## Installation
 
-
-Setup Laravel Environment(PHP 7.1, Redis, etc)
-$ wget https://raw.githubusercontent.com/jorgie-o/laravel-server-provision/master/provision.sh | bash
-
-Set up the site to a domain or IP address as well as give folder permissions to www-data
-$ wget https://raw.githubusercontent.com/jorgie-o/laravel-server-provision/master/laravel-virtual-site.sh | bash
-
-================
-
 1). Pull down the script
 
-My Ubuntu 16.04
+Ubuntu 16
 
 ```
-wget https://raw.githubusercontent.com/TrustFinity/server-init/master/deploy-16.sh -O deploy.sh
+wget https://raw.githubusercontent.com/pirupius/lemp-server-setup/master/lemp-ubuntu-16.sh -O deploy.sh
 chmod +x deploy.sh
 ```
 
-Ubuntu 14.04
+Ubuntu 18
 
 ```
-wget https://raw.githubusercontent.com/TrustFinity/server-init/master/deploy.sh
+wget https://raw.githubusercontent.com/pirupius/lemp-server-setup/master/lemp-ubuntu-14.sh -O deploy.sh
 chmod +x deploy.sh
 ```
 
